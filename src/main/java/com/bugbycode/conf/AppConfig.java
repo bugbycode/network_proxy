@@ -18,7 +18,9 @@ import io.netty.util.concurrent.GlobalEventExecutor;
 @Configuration
 public class AppConfig {
 	
-	public static final int WORK_THREAD_NUMBER = 1000;
+	public static final int WORK_THREAD_NUMBER = 100;
+	
+	public static final int MAX_CLIENT_NUMBER = 500;
 	
 	@Bean("channelGroup")
 	public ChannelGroup getChannelGroup() {
@@ -32,7 +34,7 @@ public class AppConfig {
 	
 	@Bean
 	public NioEventLoopGroup remoteGroup() {
-		return new NioEventLoopGroup(WORK_THREAD_NUMBER);
+		return new NioEventLoopGroup(MAX_CLIENT_NUMBER);
 	}
 	
 	@Bean
