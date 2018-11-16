@@ -99,6 +99,7 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
 			
 			message.setType(MessageCode.AUTH_SUCCESS);
 			message.setData(null);
+			channel.writeAndFlush(message);
 			
 			onlineAgentMap.put(username, channel);
 			channelGroup.add(channel);
@@ -113,7 +114,7 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
 		
 		if(type == MessageCode.HEARTBEAT) {
 			//
-			System.out.println(message);
+			//System.out.println(message);
 			return;
 		}
 		
@@ -166,7 +167,7 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
 			IdleStateEvent event = (IdleStateEvent) evt;
 			if (event.state() == IdleState.READER_IDLE) {
 				loss_connect_time++;
-				logger.info("Read heartbeat timeout.");
+				//logger.info("Read heartbeat timeout.");
 				if (loss_connect_time > 2) {
 					logger.info("Channel timeout.");
 					ctx.channel().close();
