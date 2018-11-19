@@ -18,8 +18,11 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.group.ChannelGroup;
+import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 
 public class ServerHandler extends ChannelInboundHandlerAdapter {
 	
@@ -53,7 +56,19 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
 
 	@Override
 	public void channelActive(ChannelHandlerContext ctx) throws Exception {
-		super.channelActive(ctx);
+		//super.channelActive(ctx);
+		ctx.pipeline().get(SslHandler.class).handshakeFuture().addListener(new GenericFutureListener<Future<Channel>>() {
+
+			@Override
+			public void operationComplete(Future<Channel> future) throws Exception {
+				if(future.isSuccess()){  
+					System.out.println("握手成功");  
+				}else{  
+                    System.out.println("握手失败");  
+                }  
+			}
+			
+		});
 		logger.info("Agent connection...");
 	}
 	
