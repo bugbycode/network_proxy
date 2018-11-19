@@ -52,7 +52,7 @@ public class ServerChannelInitializer extends ChannelInitializer<SocketChannel> 
 	@Override
 	protected void initChannel(SocketChannel sc) throws Exception {
 		ChannelPipeline p = sc.pipeline();
-		SslContext context = SSLContextUtil.getContext(keystorePath, keystorePassword);
+		SslContext context = SSLContextUtil.getServerContext(keystorePath, keystorePassword);
 		SSLEngine engine = context.newEngine(sc.alloc());
 		engine.setUseClientMode(false);
 		p.addLast(new SslHandler(engine));
