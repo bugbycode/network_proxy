@@ -56,15 +56,15 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
 
 	@Override
 	public void channelActive(ChannelHandlerContext ctx) throws Exception {
-		//super.channelActive(ctx);
+		super.channelActive(ctx);
 		ctx.pipeline().get(SslHandler.class).handshakeFuture().addListener(new GenericFutureListener<Future<Channel>>() {
 
 			@Override
 			public void operationComplete(Future<Channel> future) throws Exception {
 				if(future.isSuccess()){  
-					System.out.println("握手成功");  
+					logger.info("SSL auth successfully.");  
 				}else{  
-                    System.out.println("握手失败");  
+					logger.info("SSL auth failed.");  
                 }  
 			}
 			
