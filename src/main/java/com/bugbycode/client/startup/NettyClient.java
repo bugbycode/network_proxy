@@ -11,6 +11,7 @@ import com.bugbycode.module.Message;
 import com.bugbycode.module.MessageCode;
 
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -87,11 +88,20 @@ public class NettyClient {
 		});
 	}
 	
-	public void writeAndFlush(Object msg) {
+//	public void writeAndFlush(Object msg) {
+//		if(future == null) {
+//			return;
+//		}
+//		future.channel().writeAndFlush(msg);
+//	}
+	
+	public void writeAndFlush(byte[] data) {
 		if(future == null) {
 			return;
 		}
-		future.channel().writeAndFlush(msg);
+		ByteBuf buff = future.channel().alloc().buffer(data.length);
+		buff.writeBytes(data);
+		future.channel().writeAndFlush(buff);
 	}
 	
 	public void close() {

@@ -165,9 +165,9 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
 				return;
 			}
 			byte[] buffer = (byte[]) data;
-			ByteBuf buff = ctx.alloc().buffer(buffer.length);
-			buff.writeBytes(buffer);
-			client.writeAndFlush(buff);
+//			ByteBuf buff = ctx.alloc().buffer(buffer.length);
+//			buff.writeBytes(buffer);
+			client.writeAndFlush(buffer);
 		}
 	}
 	
