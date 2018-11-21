@@ -39,7 +39,7 @@ public class ClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
 	@Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception{
 		super.channelInactive(ctx);
-		client.close();
+		client.close(true);
 	}
 	
 	@Override

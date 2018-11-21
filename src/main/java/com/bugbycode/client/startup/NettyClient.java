@@ -82,7 +82,7 @@ public class NettyClient {
 					logger.info("Connection to " + host + ":" + port + " failed.");
 					message.setType(MessageCode.CONNECTION_ERROR);
 					serverChannel.writeAndFlush(message);
-					close();
+					close(true);
 				}
 			}
 		});
@@ -94,12 +94,14 @@ public class NettyClient {
 		clientChannel.writeAndFlush(buff);
 	}
 	
-	public void close() {
+	public void close(boolean sendClose) {
 		
 		this.nettyClientMap.remove(token);
 		
-		Message message = new Message(token, MessageCode.CLOSE_CONNECTION, null);
-		serverChannel.writeAndFlush(message);
+		if(sendClose) {
+			Message message = new Message(token, MessageCode.CLOSE_CONNECTION, null);
+			serverChannel.writeAndFlush(message);
+		}
 		
 		if(clientChannel != null && clientChannel.isOpen()) {
 			clientChannel.close();

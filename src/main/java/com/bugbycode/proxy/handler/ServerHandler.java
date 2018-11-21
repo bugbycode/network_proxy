@@ -82,7 +82,7 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
 			if(client == null) {
 				continue;
 			}
-			client.close();
+			client.close(false);
 		}
 	}
 	
@@ -161,7 +161,7 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
 		if(type == MessageCode.CLOSE_CONNECTION) {
 			NettyClient client = nettyClientMap.get(token);
 			if(client != null) {
-				client.close();
+				client.close(false);
 			}
 			return;
 		}
