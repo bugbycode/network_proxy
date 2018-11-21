@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
 
-import com.bugbycode.client.startup.NettyClient;
 import com.bugbycode.config.HandlerConst;
 import com.bugbycode.config.IdleConfig;
 import com.bugbycode.handler.MessageDecoder;
@@ -38,9 +37,6 @@ public class ServerChannelInitializer extends ChannelInitializer<SocketChannel> 
 	private EventLoopGroup remoteGroup;
 	
 	@Autowired
-	private Map<String,NettyClient> nettyClientMap;
-	
-	@Autowired
 	private Map<String, Channel> onlineAgentMap;
 	
 	@Value("${spring.keystore.path}")
@@ -63,7 +59,7 @@ public class ServerChannelInitializer extends ChannelInitializer<SocketChannel> 
 						HandlerConst.LENGTH_FIELD_LENGTH, HandlerConst.LENGTH_AD_JUSTMENT, 
 						HandlerConst.INITIAL_BYTES_TO_STRIP),
 				new MessageEncoder(),
-				new ServerHandler(channelGroup, remoteGroup, nettyClientMap, onlineAgentMap)
+				new ServerHandler(channelGroup, remoteGroup, onlineAgentMap)
 		);
 	}
 }

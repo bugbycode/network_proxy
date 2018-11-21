@@ -18,7 +18,6 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 
@@ -26,7 +25,7 @@ public class NettyClient {
 	
 	private final Logger logger = LogManager.getLogger(NettyClient.class);
 	
-	private ChannelFuture future;
+	private Channel clientChannel;
 	
 	private Bootstrap remoteClient;
 	
@@ -70,7 +69,7 @@ public class NettyClient {
 			}
 		});
 		
-		future = this.remoteClient.connect(host, port).addListener(new ChannelFutureListener() {
+		this.remoteClient.connect(host, port).addListener(new ChannelFutureListener() {
 			@Override
 			public void operationComplete(ChannelFuture future) throws Exception {
 				Message message = new Message(token, MessageCode.CONNECTION_SUCCESS, null);
@@ -78,6 +77,7 @@ public class NettyClient {
 					logger.info("Connection to " + host + ":" + port + " successfully.");
 					message.setType(MessageCode.CONNECTION_SUCCESS);
 					serverChannel.writeAndFlush(message);
+					clientChannel = future.channel();
 				}else {
 					logger.info("Connection to " + host + ":" + port + " failed.");
 					message.setType(MessageCode.CONNECTION_ERROR);
@@ -88,20 +88,10 @@ public class NettyClient {
 		});
 	}
 	
-//	public void writeAndFlush(Object msg) {
-//		if(future == null) {
-//			return;
-//		}
-//		future.channel().writeAndFlush(msg);
-//	}
-	
 	public void writeAndFlush(byte[] data) {
-		if(future == null) {
-			return;
-		}
-		ByteBuf buff = future.channel().alloc().buffer(data.length);
+		ByteBuf buff = clientChannel.alloc().buffer(data.length);
 		buff.writeBytes(data);
-		future.channel().writeAndFlush(buff);
+		clientChannel.writeAndFlush(buff);
 	}
 	
 	public void close() {
@@ -111,10 +101,9 @@ public class NettyClient {
 		Message message = new Message(token, MessageCode.CLOSE_CONNECTION, null);
 		serverChannel.writeAndFlush(message);
 		
-		if(future == null) {
-			return;
+		if(clientChannel != null && clientChannel.isOpen()) {
+			clientChannel.close();
 		}
-		future.channel().close();
 		
 		logger.info("Disconnection to " + host + ":" + port + " .");
 	}

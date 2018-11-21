@@ -1,7 +1,9 @@
 package com.bugbycode.proxy.handler;
 
-import java.util.LinkedList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -11,8 +13,8 @@ import com.bugbycode.module.Authentication;
 import com.bugbycode.module.ConnectionInfo;
 import com.bugbycode.module.Message;
 import com.bugbycode.module.MessageCode;
+import com.util.StringUtil;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -42,15 +44,11 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
 	
 	private Map<String, Channel> onlineAgentMap;
 	
-	private LinkedList<NettyClient> queue;
-	
 	public ServerHandler(ChannelGroup channelGroup, EventLoopGroup remoteGroup, 
-			Map<String, NettyClient> nettyClientMap,
 			Map<String, Channel> onlineAgentMap) {
-		this.queue = new LinkedList<NettyClient>();
 		this.channelGroup = channelGroup;
 		this.remoteGroup = remoteGroup;
-		this.nettyClientMap = nettyClientMap;
+		this.nettyClientMap = Collections.synchronizedMap(new HashMap<String,NettyClient>());
 		this.onlineAgentMap = onlineAgentMap;
 	}
 
@@ -77,8 +75,14 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
 		logger.info("Agent connection closed... " + username);
 		onlineAgentMap.remove(username);
 		channelGroup.remove(ctx.channel());
-		while(!queue.isEmpty()) {
-			queue.removeFirst().close();
+		Set<String> tokenSet = nettyClientMap.keySet();
+		NettyClient client;
+		for(String token : tokenSet) {
+			client = nettyClientMap.get(token);
+			if(client == null) {
+				continue;
+			}
+			client.close();
 		}
 	}
 	
@@ -112,6 +116,14 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
 			this.username = username;
 			this.password = password;
 			
+			if(StringUtil.isBlank(this.password)) {
+				message.setType(MessageCode.AUTH_ERROR);
+				message.setData(null);
+				channel.writeAndFlush(message);
+				ctx.close();
+				return;
+			}
+			
 			message.setType(MessageCode.AUTH_SUCCESS);
 			message.setData(null);
 			channel.writeAndFlush(message);
@@ -143,7 +155,6 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
 			NettyClient client = new NettyClient(message, channel, remoteGroup, 
 					nettyClientMap);
 			client.connection();
-			queue.add(client);
 			return;
 		}
 		
@@ -196,6 +207,10 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 		ctx.close();
-		logger.error(cause.getMessage());
+		String error = cause.getMessage();
+		if(StringUtil.isBlank(error)) {
+			cause.printStackTrace();
+		}
+		logger.error(error);
 	}
 }
