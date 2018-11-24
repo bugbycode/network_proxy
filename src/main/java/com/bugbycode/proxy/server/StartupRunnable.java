@@ -38,7 +38,7 @@ public class StartupRunnable implements Runnable {
 	@Override
 	public void run() {
 		
-		boss = new NioEventLoopGroup(AppConfig.WORK_THREAD_NUMBER);
+		boss = new NioEventLoopGroup(AppConfig.BOSS_THREAD_NUMBER);
 		worker = new NioEventLoopGroup(AppConfig.WORK_THREAD_NUMBER);
 		ServerBootstrap bootstrap = new ServerBootstrap();
 		
