@@ -1,5 +1,7 @@
 package com.bugbycode.client.handler;
 
+import java.util.Map;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -16,13 +18,17 @@ public class ClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
 	private final Logger logger = LogManager.getLogger(ClientHandler.class);
 	
+	private Map<String,NettyClient> nettyClientMap;
+	
 	private Channel serverChannel;
 	
 	private String token;
 	
 	private NettyClient client;
 	
-	public ClientHandler(Channel serverChannel,String token,NettyClient client) {
+	public ClientHandler(Map<String,NettyClient> nettyClientMap,
+			Channel serverChannel,String token,NettyClient client) {
+		this.nettyClientMap = nettyClientMap;
 		this.serverChannel = serverChannel;
 		this.token = token;
 		this.client = client;
@@ -40,6 +46,9 @@ public class ClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
     public void channelInactive(ChannelHandlerContext ctx) throws Exception{
 		super.channelInactive(ctx);
 		client.close(true);
+		synchronized (nettyClientMap) {
+			nettyClientMap.remove(token);
+		}
 	}
 	
 	@Override

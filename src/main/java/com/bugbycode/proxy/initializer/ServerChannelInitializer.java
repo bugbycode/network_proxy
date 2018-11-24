@@ -16,6 +16,7 @@ import com.bugbycode.handler.MessageEncoder;
 import com.bugbycode.proxy.handler.ServerHandler;
 import com.util.ssl.SSLContextUtil;
 
+import io.netty.buffer.UnpooledByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
@@ -45,14 +46,25 @@ public class ServerChannelInitializer extends ChannelInitializer<SocketChannel> 
 	@Value("${spring.keystore.password}")
 	private String keystorePassword;
 	
+	private SslContext context;
+	
+	public ServerChannelInitializer() {
+		
+	}
+	
 	@Override
 	protected void initChannel(SocketChannel sc) throws Exception {
+		sc.config().setAllocator(UnpooledByteBufAllocator.DEFAULT);
 		ChannelPipeline p = sc.pipeline();
-		SslContext context = SSLContextUtil.getServerContext(keystorePath, keystorePassword);
+		/*
+		if(this.context == null) {
+			this.context = SSLContextUtil.getServerContext(keystorePath, keystorePassword);
+		}
+		
 		SSLEngine engine = context.newEngine(sc.alloc());
 		engine.setUseClientMode(false);
 		p.addLast(new SslHandler(engine));
-		
+		*/
 		p.addLast(
 				new IdleStateHandler(IdleConfig.READ_IDEL_TIME_OUT, IdleConfig.WRITE_IDEL_TIME_OUT, IdleConfig.ALL_IDEL_TIME_OUT),
 				new MessageDecoder(HandlerConst.MAX_FRAME_LENGTH, HandlerConst.LENGTH_FIELD_OFFSET, 

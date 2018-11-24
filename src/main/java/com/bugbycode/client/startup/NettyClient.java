@@ -12,6 +12,9 @@ import com.bugbycode.module.MessageCode;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.PooledByteBufAllocator;
+import io.netty.buffer.UnpooledByteBufAllocator;
+import io.netty.channel.AdaptiveRecvByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -51,7 +54,9 @@ public class NettyClient {
 		this.conn = (ConnectionInfo) msg.getData();
 		this.remoteGroup = remoteGroup;
 		this.nettyClientMap = nettyClientMap;
-		this.nettyClientMap.put(token, this);
+		synchronized (this.nettyClientMap) {
+			this.nettyClientMap.put(token, this);
+		}
 	}
 	
 	public void connection() {
@@ -59,13 +64,16 @@ public class NettyClient {
 		port = conn.getPort();
 		
 		this.remoteClient.group(remoteGroup).channel(NioSocketChannel.class);
+		this.remoteClient.option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);
+		this.remoteClient.option(ChannelOption.RCVBUF_ALLOCATOR, AdaptiveRecvByteBufAllocator.DEFAULT);
 		this.remoteClient.option(ChannelOption.CONNECT_TIMEOUT_MILLIS,5000);
 		this.remoteClient.option(ChannelOption.TCP_NODELAY, true);
 		this.remoteClient.option(ChannelOption.SO_KEEPALIVE, true);
 		this.remoteClient.handler(new ChannelInitializer<SocketChannel>() {
 			@Override
 			protected void initChannel(SocketChannel ch) throws Exception {
-				ch.pipeline().addLast(new ClientHandler(serverChannel,token,NettyClient.this));
+				ch.config().setAllocator(UnpooledByteBufAllocator.DEFAULT);
+				ch.pipeline().addLast(new ClientHandler(nettyClientMap,serverChannel,token,NettyClient.this));
 			}
 		});
 		
@@ -82,6 +90,7 @@ public class NettyClient {
 					logger.info("Connection to " + host + ":" + port + " failed.");
 					message.setType(MessageCode.CONNECTION_ERROR);
 					serverChannel.writeAndFlush(message);
+					nettyClientMap.remove(token);
 					close(true);
 				}
 			}
@@ -96,7 +105,7 @@ public class NettyClient {
 	
 	public void close(boolean sendClose) {
 		
-		this.nettyClientMap.remove(token);
+		//this.nettyClientMap.remove(token);
 		
 		if(sendClose) {
 			Message message = new Message(token, MessageCode.CLOSE_CONNECTION, null);

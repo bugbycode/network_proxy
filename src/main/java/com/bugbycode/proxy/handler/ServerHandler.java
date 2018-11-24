@@ -2,7 +2,10 @@ package com.bugbycode.proxy.handler;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -55,7 +58,7 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
 	@Override
 	public void channelActive(ChannelHandlerContext ctx) throws Exception {
 		super.channelActive(ctx);
-		ctx.pipeline().get(SslHandler.class).handshakeFuture().addListener(new GenericFutureListener<Future<Channel>>() {
+		/*ctx.pipeline().get(SslHandler.class).handshakeFuture().addListener(new GenericFutureListener<Future<Channel>>() {
 
 			@Override
 			public void operationComplete(Future<Channel> future) throws Exception {
@@ -66,7 +69,7 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
                 }  
 			}
 			
-		});
+		});*/
 		logger.info("Agent connection...");
 	}
 	
@@ -75,14 +78,14 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
 		logger.info("Agent connection closed... " + username);
 		onlineAgentMap.remove(username);
 		channelGroup.remove(ctx.channel());
-		Set<String> tokenSet = nettyClientMap.keySet();
-		NettyClient client;
-		for(String token : tokenSet) {
-			client = nettyClientMap.get(token);
-			if(client == null) {
-				continue;
+		Set<String> keySet = nettyClientMap.keySet();
+		synchronized(nettyClientMap) {
+			Iterator<String> it = keySet.iterator();
+			while(it.hasNext()) {
+				String key = it.next();
+				nettyClientMap.get(key).close(false);
 			}
-			client.close(false);
+			nettyClientMap.clear();
 		}
 	}
 	
@@ -159,26 +162,28 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
 		}
 		
 		if(type == MessageCode.CLOSE_CONNECTION) {
-			NettyClient client = nettyClientMap.get(token);
-			if(client != null) {
-				client.close(false);
+			synchronized (nettyClientMap) {
+				NettyClient client = nettyClientMap.get(token);
+				if(client != null) {
+					client.close(false);
+				}
 			}
 			return;
 		}
 		
 		if(type == MessageCode.TRANSFER_DATA) {
-			NettyClient client = nettyClientMap.get(token);
-			if(client == null) {
-				message.setToken(token);
-				message.setType(MessageCode.CLOSE_CONNECTION);
-				message.setData(null);
-				channel.writeAndFlush(message);
-				return;
+			synchronized (nettyClientMap) {
+				NettyClient client = nettyClientMap.get(token);
+				if(client == null) {
+					message.setToken(token);
+					message.setType(MessageCode.CLOSE_CONNECTION);
+					message.setData(null);
+					channel.writeAndFlush(message);
+					return;
+				}
+				byte[] buffer = (byte[]) data;
+				client.writeAndFlush(buffer);
 			}
-			byte[] buffer = (byte[]) data;
-//			ByteBuf buff = ctx.alloc().buffer(buffer.length);
-//			buff.writeBytes(buffer);
-			client.writeAndFlush(buffer);
 		}
 	}
 	

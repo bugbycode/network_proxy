@@ -6,6 +6,7 @@ import org.apache.logging.log4j.Logger;
 import com.bugbycode.conf.AppConfig;
 
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandler;
@@ -42,9 +43,10 @@ public class StartupRunnable implements Runnable {
 		ServerBootstrap bootstrap = new ServerBootstrap();
 		
 		bootstrap.group(boss, worker).channel(NioServerSocketChannel.class)
+				.option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
 				.option(ChannelOption.SO_BACKLOG, so_backlog)
-				.option(ChannelOption.TCP_NODELAY, true)
 				.childOption(ChannelOption.SO_KEEPALIVE, true)
+				.childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
 				.childHandler(serverChannelInitializer);
 		
 		bootstrap.bind(serverPort).addListener(new ChannelFutureListener() {
