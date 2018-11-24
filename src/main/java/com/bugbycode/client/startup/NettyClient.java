@@ -104,6 +104,8 @@ public class NettyClient {
 	}
 	
 	public void close(boolean sendClose) {
+
+		System.gc();
 		
 		//this.nettyClientMap.remove(token);
 		

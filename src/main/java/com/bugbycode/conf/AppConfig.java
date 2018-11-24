@@ -16,19 +16,20 @@ import io.netty.util.concurrent.GlobalEventExecutor;
 @Configuration
 public class AppConfig {
 	
-	public static final int WORK_THREAD_NUMBER = 100;
+	public static final int WORK_THREAD_NUMBER = 10;
 	
-	public static final int MAX_CLIENT_NUMBER = 500;
+	public static final int MAX_CLIENT_NUMBER = 50;
 	
 	@Bean("channelGroup")
 	public ChannelGroup getChannelGroup() {
 		return new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 	}
 	
+	/*
 	@Bean
 	public NioEventLoopGroup remoteGroup() {
 		return new NioEventLoopGroup(MAX_CLIENT_NUMBER);
-	}
+	}*/
 	
 	@Bean
 	public Map<String, Channel> onlineAgentMap(){

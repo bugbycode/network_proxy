@@ -34,7 +34,7 @@ public class ServerChannelInitializer extends ChannelInitializer<SocketChannel> 
 	@Autowired
 	private ChannelGroup channelGroup;
 	
-	@Autowired
+	//@Autowired
 	private EventLoopGroup remoteGroup;
 	
 	@Autowired
